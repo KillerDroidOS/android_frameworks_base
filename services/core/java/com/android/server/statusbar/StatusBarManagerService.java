@@ -741,7 +741,9 @@ public class StatusBarManagerService extends IStatusBarService.Stub {
         if (mBar != null) {
             try {
                 mBar.handleInDisplayFingerprintView(show, isEnrolling);
-            } catch (RemoteException ex) {}
+            } catch (RemoteException ex) {
+                // do nothing
+            }
         }
     }
 

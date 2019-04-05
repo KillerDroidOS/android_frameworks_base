@@ -941,6 +941,13 @@ public class CommandQueue extends IStatusBar.Stub {
                         mCallbacks.get(i).setAutoRotate(msg.arg1 != 0);
                     }
                     break;
+                case MSG_IN_DISPLAY_FINGERPRINT:
+                    for (int i = 0; i < mCallbacks.size(); i++) {
+                        mCallbacks.get(i).handleInDisplayFingerprintView(
+                                (boolean)((SomeArgs)msg.obj).arg1,
+                                (boolean)((SomeArgs)msg.obj).arg2);
+                    }
+                    break;
             }
         }
     }
