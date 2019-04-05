@@ -89,6 +89,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import vendor.lineage.biometrics.fingerprint.inscreen.V1_0.IFingerprintInscreen;
@@ -404,13 +405,18 @@ public class FingerprintService extends SystemService implements IHwBinder.Death
         if (mExtDaemon == null) {
             try {
                 mExtDaemon = IFingerprintInscreen.getService();
-            } catch (RemoteException e) {}
+            } catch (NoSuchElementException | RemoteException e) {
+                // do nothing
+            }
         }
 
         try {
-            if (mExtDaemon != null && !mExtDaemon.shouldHandleError(error))
+            if (mExtDaemon != null && !mExtDaemon.shouldHandleError(error)) {
                 return;
-        } catch (RemoteException e) {}
+            }
+        } catch (NoSuchElementException | RemoteException e) {
+            // do nothing
+        }
 
         ClientMonitor client = mCurrentClient;
         if (client instanceof InternalRemovalClient || client instanceof InternalEnumerateClient) {
@@ -970,7 +976,7 @@ public class FingerprintService extends SystemService implements IHwBinder.Death
         final int groupId = userId; // default group for fingerprint enrollment
 
         EnrollClient client = new EnrollClient(getContext(), mHalDeviceId, token, receiver,
-                userId, groupId, cryptoToken, restricted, opPackageName) {
+                userId, groupId, cryptoToken, restricted, opPackageName, mStatusBarService) {
 
             @Override
             public IBiometricsFingerprint getFingerprintDaemon() {
