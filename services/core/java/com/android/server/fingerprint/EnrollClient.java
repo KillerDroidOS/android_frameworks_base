@@ -29,6 +29,8 @@ import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 
 import java.util.Arrays;
 
+import vendor.lineage.biometrics.fingerprint.inscreen.V1_0.IFingerprintInscreen;
+
 /**
  * A class to keep track of the enrollment state for a given client.
  */
@@ -36,6 +38,9 @@ public abstract class EnrollClient extends ClientMonitor {
     private static final long MS_PER_SEC = 1000;
     private static final int ENROLLMENT_TIMEOUT_MS = 60 * 1000; // 1 minute
     private byte[] mCryptoToken;
+    private boolean mDisplayFODView;
+    private IStatusBarService mStatusBarService;
+    private IFingerprintInscreen mExtDaemon = null;
 
     public EnrollClient(Context context, long halDeviceId, IBinder token,
             IFingerprintServiceReceiver receiver, int userId, int groupId, byte [] cryptoToken,
@@ -69,6 +74,13 @@ public abstract class EnrollClient extends ClientMonitor {
         MetricsLogger.action(getContext(), MetricsEvent.ACTION_FINGERPRINT_ENROLL);
         try {
             receiver.onEnrollResult(getHalDeviceId(), fpId, groupId, remaining);
+            if(remaining == 0 && mDisplayFODView) {
+                try {
+                    mExtDaemon = IFingerprintInscreen.getService();
+                    mExtDaemon.onFinishEnroll();
+                    mStatusBarService.handleInDisplayFingerprintView(false, true);
+                } catch (RemoteException e) {}
+            }
             return remaining == 0;
         } catch (RemoteException e) {
             Slog.w(TAG, "Failed to notify EnrollResult:", e);
@@ -83,6 +95,17 @@ public abstract class EnrollClient extends ClientMonitor {
             Slog.w(TAG, "enroll: no fingerprint HAL!");
             return ERROR_ESRCH;
         }
+
+        Slog.w(TAG, "Starting enroll");
+
+        if (mDisplayFODView) {
+            try {
+                mExtDaemon = IFingerprintInscreen.getService();
+                mExtDaemon.onStartEnroll();
+                mStatusBarService.handleInDisplayFingerprintView(true, true);
+            } catch (RemoteException e) {}
+        }
+
         final int timeout = (int) (ENROLLMENT_TIMEOUT_MS / MS_PER_SEC);
         try {
             final int result = daemon.enroll(mCryptoToken, getGroupId(), timeout);

@@ -32,6 +32,8 @@ import com.android.internal.logging.MetricsLogger;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 import com.android.internal.statusbar.IStatusBarService;
 
+import vendor.lineage.biometrics.fingerprint.inscreen.V1_0.IFingerprintInscreen;
+
 /**
  * A class to keep track of the authentication state for a given client.
  */
@@ -53,6 +55,10 @@ public abstract class AuthenticationClient extends ClientMonitor {
     private boolean mInLockout;
     private final FingerprintManager mFingerprintManager;
     protected boolean mDialogDismissed;
+
+    private boolean mDisplayFODView;
+    private IFingerprintInscreen mExtDaemon = null;
+    private final String mKeyguardPackage;
 
     // Receives events from SystemUI and handles them before forwarding them to FingerprintDialog
     protected IBiometricPromptReceiver mDialogReceiver = new IBiometricPromptReceiver.Stub() {
@@ -246,6 +252,22 @@ public abstract class AuthenticationClient extends ClientMonitor {
             Slog.w(TAG, "start authentication: no fingerprint HAL!");
             return ERROR_ESRCH;
         }
+
+        if (mDisplayFODView) {
+            try {
+                mExtDaemon = IFingerprintInscreen.getService();
+                Slog.w(TAG, "getOwnerString : " + isKeyguard(getOwnerString()));
+
+                if (isKeyguard(getOwnerString())) {
+                    mExtDaemon.setLongPressEnabled(true);
+                } else {
+                    mExtDaemon.setLongPressEnabled(false);
+                }
+
+                mStatusBarService.handleInDisplayFingerprintView(true, false);
+            } catch (RemoteException e) {}
+        }
+
         onStart();
         try {
             final int result = daemon.authenticate(mOpId, getGroupId());
