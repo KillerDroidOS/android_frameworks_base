@@ -24,6 +24,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.provider.Settings;
@@ -45,6 +47,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import vendor.lineage.biometrics.fingerprint.inscreen.V1_0.IFingerprintInscreen;
+import vendor.lineage.biometrics.fingerprint.inscreen.V1_0.IFingerprintInscreenCallback;
 
 public class FODCircleView extends ImageView implements OnTouchListener {
     private final int mX, mY, mW, mH;
@@ -68,7 +71,6 @@ public class FODCircleView extends ImageView implements OnTouchListener {
     public boolean viewAdded;
     private boolean mIsEnrolling;
     private boolean mShouldBoostBrightness;
-
 
     private Timer mBurnInProtectionTimer = null;
 
@@ -412,7 +414,11 @@ public class FODCircleView extends ImageView implements OnTouchListener {
             mParams.dimAmount = 0.0f;
         }
 
-        mWindowManager.updateViewLayout(this, mParams);
+        try {
+            mWindowManager.updateViewLayout(this, mParams);
+        } catch (IllegalArgumentException e) {
+            // do nothing
+        }
     }
 
     private class BurnInProtectionTask extends TimerTask {

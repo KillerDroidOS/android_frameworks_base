@@ -632,6 +632,9 @@ public class CommandQueue extends IStatusBar.Stub {
             mHandler.removeMessages(MSG_SET_AUTOROTATE_STATUS);
             mHandler.obtainMessage(MSG_SET_AUTOROTATE_STATUS,
                 enabled ? 1 : 0, 0, null).sendToTarget();
+        }
+    }
+
     @Override
     public void handleInDisplayFingerprintView(boolean show, boolean isEnrolling) {
         synchronized (mLock) {
@@ -928,12 +931,6 @@ public class CommandQueue extends IStatusBar.Stub {
                 case MSG_SET_AUTOROTATE_STATUS:
                     for (int i = 0; i < mCallbacks.size(); i++) {
                         mCallbacks.get(i).setAutoRotate(msg.arg1 != 0);
-                    break;
-                case MSG_IN_DISPLAY_FINGERPRINT:
-                    for (int i = 0; i < mCallbacks.size(); i++) {
-                        mCallbacks.get(i).handleInDisplayFingerprintView(
-                                (boolean)((SomeArgs)msg.obj).arg1,
-                                (boolean)((SomeArgs)msg.obj).arg2);
                     }
                     break;
             }
